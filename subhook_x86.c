@@ -29,11 +29,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdint.h>
 #include "subhook.h"
 #include "subhook_private.h"
 
-#ifdef SUBHOOK_WINDOWS
+#if defined SUBHOOK_WINDOWS && (! defined INT32_MAX)
   #define INT32_MAX 0x7fffffff
   #define INT32_MIN (-INT32_MAX - 1)
   typedef unsigned __int8 uint8_t;
@@ -219,7 +219,8 @@ SUBHOOK_EXPORT int SUBHOOK_API subhook_disasm(void *src, int *reloc_op_offset) {
   int len = 0;
   int operand_size = 4;
   uint8_t opcode = 0;
-  int found_opcode = false;
+  (void)opcode;
+  int found_opcode = 0;
 
   for (i = 0; i < sizeof(prefixes) / sizeof(*prefixes); i++) {
     if (code[len] == prefixes[i]) {
@@ -353,7 +354,7 @@ static int subhook_make_jmp32(void *src, void *dst) {
 #endif
 
   jmp->opcode = JMP_OPCODE;
-  jmp->offset = (int32_t)(dst_addr - (src_addr + sizeof(*jmp)));
+  jmp->offset = (int32_t)((uint64_t)dst_addr - ((uint64_t)src_addr + sizeof(*jmp)));
 
   return 0;
 }
@@ -410,8 +411,7 @@ static int subhook_make_trampoline(void *trampoline,
   while (orig_size < jmp_size) {
     int reloc_op_offset = 0;
 
-    insn_len =
-      disasm_handler((void *)(src_addr + orig_size), &reloc_op_offset);
+    insn_len = (size_t)disasm_handler((void *)((uint64_t)src_addr + (uint64_t)orig_size), &reloc_op_offset);
 
     if (insn_len == 0) {
       return -EINVAL;
@@ -419,8 +419,8 @@ static int subhook_make_trampoline(void *trampoline,
 
     /* Copy this instruction to the trampoline.
      */
-    memcpy((void *)(trampoline_addr + orig_size),
-           (void *)(src_addr + orig_size),
+    memcpy((void *)((uint64_t)trampoline_addr + orig_size),
+           (void *)((uint64_t)src_addr + orig_size),
            insn_len);
 
     /* If the operand is a relative address, such as found in calls or jumps,
@@ -442,7 +442,7 @@ static int subhook_make_trampoline(void *trampoline,
         return -EOVERFLOW;
       }
 #endif
-      int32_t *op = (int32_t *)(trampoline_addr + orig_size + reloc_op_offset);
+      int32_t *op = (int32_t *)((uint64_t)trampoline_addr + orig_size + (uint64_t)reloc_op_offset);
       *op -= (int32_t)offset;
     }
 
@@ -454,8 +454,8 @@ static int subhook_make_trampoline(void *trampoline,
   /* Insert the final jump. It goes back to the original code at
    * src + orig_size.
    */
-  return subhook_make_jmp((void *)(trampoline_addr + orig_size),
-                          (void *)(src_addr + orig_size),
+  return subhook_make_jmp((void *)((uint64_t)trampoline_addr + orig_size),
+                          (void *)((uint64_t)src_addr + orig_size),
                           flags);
 }
 
@@ -568,7 +568,7 @@ SUBHOOK_EXPORT void *SUBHOOK_API subhook_read_dst(void *src)  {
 
   if (maybe_jmp32->opcode == JMP_OPCODE) {
     return (void *)(
-      maybe_jmp32->offset + (uintptr_t)src + sizeof(*maybe_jmp32));
+      (uintptr_t)maybe_jmp32->offset + (uintptr_t)src + sizeof(*maybe_jmp32));
   }
 
 #ifdef SUBHOOK_X86_64

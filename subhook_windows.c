@@ -25,9 +25,11 @@
  */
 
 #include <stddef.h>
-#include <windows.h>
+#include <Windows.h>
+#include <stdint.h>
+#include <subhook_private.h>
 
-typedef __int64 QWORD;
+typedef int64_t QWORD;
 
 #define SUBHOOK_CODE_PROTECT_FLAGS PAGE_EXECUTE_READWRITE
 
@@ -86,3 +88,4 @@ int subhook_free_code(void *address, size_t size) {
   }
   return !VirtualFree(address, 0, MEM_RELEASE);
 }
+

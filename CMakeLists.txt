@@ -14,7 +14,7 @@ macro(subhook_add_option_var name type default_value description)
   set(${name} ${${name}_DEFAULT} CACHE ${type} ${description})
 endmacro()
 
-subhook_add_option_var(SUBHOOK_STATIC BOOL OFF "Build as a static library")
+subhook_add_option_var(SUBHOOK_STATIC BOOL ON "Build as a static library")
 subhook_add_option_var(SUBHOOK_INSTALL
   BOOL ON "Enable installation and packaging of targets/files with CPack")
 subhook_add_option_var(SUBHOOK_TESTS BOOL ON "Enable tests")

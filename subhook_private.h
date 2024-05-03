@@ -28,6 +28,7 @@
 #define SUBHOOK_PRIVATE_H
 
 #include <stddef.h>
+#include "subhook.h"
 
 #ifndef true
   #define true 1
@@ -51,5 +52,5 @@ struct subhook_struct {
 int subhook_unprotect(void *address, size_t size);
 void *subhook_alloc_code(void *target_address, size_t size);
 int subhook_free_code(void *address, size_t size);
-
+extern subhook_disasm_handler_t subhook_disasm_handler;
 #endif /* SUBHOOK_PRIVATE_H */
